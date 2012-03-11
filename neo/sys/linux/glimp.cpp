@@ -304,6 +304,8 @@ int sampleLevel(int AAMode) {
 	return 0;
 }
 
+static int wait_for_window_map(Display *d, XEvent *e, char *win) {return e->type==MapNotify && e->xmap.window == (Window) win;}
+
 /*
 ===============
 GLX_Init
@@ -575,9 +577,11 @@ int GLX_Init(glimpParms_t a) {
 	} else {
 		Atom atom = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", True);
 		XChangeProperty(dpy, win, XInternAtom(dpy, "_NET_WM_STATE", True), XA_ATOM,  32, PropModeReplace, (unsigned char*) &atom,  1);
-		XMapWindow( dpy, win );
 		XFlush(dpy);
 		XSync(dpy, False);
+		XMapWindow(dpy, win);
+		XEvent event;
+		XIfEvent(dpy, &event, wait_for_window_map, (char*) win);
 		XWindowAttributes windowattr;
 		XGetWindowAttributes(dpy, win, &windowattr);
 		glConfig.vidWidth = windowattr.width;
