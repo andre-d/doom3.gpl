@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../../renderer/tr_local.h"
 #include "local.h"
 
+#include <X11/Xatom.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -340,6 +341,7 @@ int GLX_Init(glimpParms_t a) {
 	XSetWindowAttributes attr;
 	XSizeHints sizehints;
 	unsigned long mask;
+	bool decorate = true;
 	int best_multisample = 0;
 	int colorbits, depthbits, stencilbits;
 	int tcolorbits, tdepthbits, tstencilbits;
@@ -414,6 +416,10 @@ int GLX_Init(glimpParms_t a) {
 			}
 		} else {
 			common->Printf( "XFree86-VidModeExtension: not fullscreen, ignored\n" );
+		}
+		
+		if (!a.fullScreen && cvarSystem->GetCVarBool("r_linux_fullscreen_window")) {
+			decorate = false;
 		}
 	}
 	// color, depth and stencil
@@ -557,15 +563,27 @@ int GLX_Init(glimpParms_t a) {
 
 	XStoreName(dpy, win, GAME_NAME);
 
-	// don't let the window be resized
-	// FIXME: allow resize (win32 does)
-	sizehints.flags = PMinSize | PMaxSize;
-	sizehints.min_width = sizehints.max_width = actualWidth;
-	sizehints.min_height = sizehints.max_height = actualHeight;
+	if(decorate) {
+		// don't let the window be resized
+		// FIXME: allow resize (win32 does)
+		sizehints.flags = PMinSize | PMaxSize;
+		sizehints.min_width = sizehints.max_width = actualWidth;
+		sizehints.min_height = sizehints.max_height = actualHeight;
 
-	XSetWMNormalHints(dpy, win, &sizehints);
+		XSetWMNormalHints(dpy, win, &sizehints);
+		XMapWindow( dpy, win );
+	} else {
+		Atom atom = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", True);
+		XChangeProperty(dpy, win, XInternAtom(dpy, "_NET_WM_STATE", True), XA_ATOM,  32, PropModeReplace, (unsigned char*) &atom,  1);
+		XMapWindow( dpy, win );
+		XFlush(dpy);
+		XSync(dpy, False);
+		XWindowAttributes windowattr;
+		XGetWindowAttributes(dpy, win, &windowattr);
+		glConfig.vidWidth = windowattr.width;
+		glConfig.vidHeight = windowattr.height;
+	}
 
-	XMapWindow( dpy, win );
 
 	if ( vidmode_active ) {
 		XMoveWindow( dpy, win, 0, 0 );
