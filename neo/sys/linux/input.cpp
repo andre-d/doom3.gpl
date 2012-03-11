@@ -181,10 +181,12 @@ static void Sys_XInstallGrabs( void ) {
 		mx = my = 0;
 	}
 	
-	XGrabKeyboard( dpy, win,
-				  False,
-				  GrabModeAsync, GrabModeAsync,
-				  CurrentTime );
+	if (glConfig.isFullscreen) {
+		XGrabKeyboard( dpy, win,
+					  False,
+					  GrabModeAsync, GrabModeAsync,
+					  CurrentTime );
+	}
 	
 	XSync( dpy, False );
 
@@ -205,7 +207,9 @@ void Sys_XUninstallGrabs(void) {
 						  mouse_accel_denominator, mouse_threshold );
 	
 	XUngrabPointer( dpy, CurrentTime );
-	XUngrabKeyboard( dpy, CurrentTime );
+	if (glConfig.isFullscreen) {
+		XUngrabKeyboard( dpy, CurrentTime );
+	}
 	
 	XWarpPointer( dpy, None, win,
 				 0, 0, 0, 0,
