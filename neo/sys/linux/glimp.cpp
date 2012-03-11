@@ -373,6 +373,11 @@ int GLX_Init(glimpParms_t a) {
 	}
 
 	GLX_TestDGA();
+	
+	if (cvarSystem->GetCVarBool("r_linux_fullscreen_window")) {
+			decorate = false;
+			a.fullScreen = false;
+	}
 
 	if ( vidmode_ext ) {
 		int best_fit, best_dist, dist, x, y;
@@ -418,10 +423,6 @@ int GLX_Init(glimpParms_t a) {
 			}
 		} else {
 			common->Printf( "XFree86-VidModeExtension: not fullscreen, ignored\n" );
-		}
-		
-		if (!a.fullScreen && cvarSystem->GetCVarBool("r_linux_fullscreen_window")) {
-			decorate = false;
 		}
 	}
 	// color, depth and stencil
